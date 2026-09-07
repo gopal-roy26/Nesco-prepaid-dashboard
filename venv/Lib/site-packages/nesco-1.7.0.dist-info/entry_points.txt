@@ -1,0 +1,2 @@
+[console_scripts]
+nesco-cli = nesco.main:app

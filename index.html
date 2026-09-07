@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="bn">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>নেসকো প্রিপেইড ড্যাশবোর্ড</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <!-- Chart.js যুক্ত করা হলো -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg: #0B1220;
+      --panel: #121B2E;
+      --panel-line: #24304A;
+      --amber: #FFB627;
+      --amber-dim: #7A5A17;
+      --text: #E7ECF5;
+      --muted: #8593AC;
+      --danger: #E8543A;
+      --good: #4ADE80;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      background-image:
+        radial-gradient(circle at 15% 0%, rgba(255, 182, 39, 0.06), transparent 40%),
+        radial-gradient(circle at 85% 100%, rgba(74, 222, 128, 0.05), transparent 45%);
+      color: var(--text);
+      font-family: 'Hind Siliguri', sans-serif;
+      min-height: 100vh;
+      padding: 32px 16px 64px;
+    }
+
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .brand .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 8px var(--amber);
+    }
+
+    h1 {
+      font-size: 22px;
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .lookup {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .lookup input {
+      flex: 1;
+      background: var(--panel);
+      border: 1px solid var(--panel-line);
+      color: var(--text);
+      padding: 13px 14px;
+      border-radius: 6px;
+      font-size: 16px;
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 0.5px;
+      transition: border-color 0.3s ease;
+    }
+
+    .lookup input:focus {
+      outline: none;
+      border-color: var(--amber);
+    }
+
+    .lookup button {
+      background: var(--amber);
+      color: #1a1305;
+      border: none;
+      padding: 0 22px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      font-family: 'Hind Siliguri', sans-serif;
+      transition: opacity 0.3s ease;
+    }
+
+    .lookup button:disabled {
+      opacity: 0.7;
+      cursor: wait;
+    }
+
+    /* নতুন ফিচার: সেভ করা মিটারের লিস্ট ডিজাইন */
+    .saved-meters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .saved-meter-btn {
+      background: var(--panel);
+      border: 1px solid var(--panel-line);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: 0.2s;
+      font-family: 'Hind Siliguri', sans-serif;
+    }
+
+    .saved-meter-btn:hover {
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+
+    .saved-meter-btn .del {
+      color: var(--danger);
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 4px;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    .saved-meter-btn .del:hover {
+      background: rgba(232, 84, 58, 0.2);
+    }
+
+    .btn-save {
+      background: rgba(74, 222, 128, 0.1);
+      border: 1px solid var(--good);
+      color: var(--good);
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-left: 12px;
+      font-family: 'Hind Siliguri', sans-serif;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+
+    .btn-save:hover {
+      background: rgba(74, 222, 128, 0.2);
+    }
+
+    .meter-panel {
+      background: linear-gradient(180deg, var(--panel), #0E1626);
+      border: 1px solid var(--panel-line);
+      border-radius: 10px;
+      padding: 28px 24px;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+
+    /* ক্রিটিক্যাল পালস ইফেক্ট */
+    @keyframes pulseAlert {
+      0% {
+        box-shadow: 0 0 0 0 rgba(232, 84, 58, 0.4);
+      }
+
+      70% {
+        box-shadow: 0 0 0 15px rgba(232, 84, 58, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(232, 84, 58, 0);
+      }
+    }
+
+    .meter-panel.danger-pulse {
+      border-color: var(--danger);
+      animation: pulseAlert 2s infinite;
+    }
+
+    .meter-panel .label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .balance-readout {
+      font-family: 'Space Mono', monospace;
+      font-size: 52px;
+      font-weight: 700;
+      color: var(--amber);
+      text-shadow: 0 0 18px rgba(255, 182, 39, 0.35);
+      line-height: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .balance-readout .unit {
+      font-size: 20px;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .balance-readout.low {
+      color: var(--danger);
+      text-shadow: 0 0 18px rgba(232, 84, 58, 0.35);
+    }
+
+    .balance-note {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--muted);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .info-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-line);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+
+    .info-card .k {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .info-card .v {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    section {
+      margin-bottom: 30px;
+    }
+
+    section h2 {
+      font-size: 16px;
+      color: var(--text);
+      font-weight: 600;
+      margin: 0 0 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--panel-line);
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    td.num,
+    th.num {
+      font-family: 'Space Mono', monospace;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 14px 0;
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* চার্ট কন্টেইনার */
+    .chart-container {
+      background: var(--panel);
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--panel-line);
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand"><span class="dot"></span> NESCO প্রিপেইড</div>
+      <h1>মিটার ব্যালেন্স ড্যাশবোর্ড</h1>
+    </header>
+
+    <div class="lookup">
+      <input id="meterInput" type="text" inputmode="numeric" placeholder="কনজিউমার / মিটার নম্বর লিখুন">
+      <button id="checkBtn">চেক করুন</button>
+    </div>
+
+    <!-- সেভ করা মিটার দেখানোর জায়গা -->
+    <div id="savedMetersList" class="saved-meters"></div>
+
+    <p id="status" class="status hidden"></p>
+
+    <div id="results" class="hidden">
+      <div class="meter-panel" id="meterPanel">
+        <div class="label">বর্তমান ব্যালেন্স</div>
+        <div class="balance-readout" id="balanceReadout">০.০০<span class="unit">টাকা</span></div>
+        <div class="balance-note" id="balanceNote"></div>
+
+        <div class="meta-row">
+          <div>
+            <span id="metaCustomer"></span>
+            <button id="saveMeterBtn" class="btn-save">💾 সেভ করুন</button>
+          </div>
+          <span id="metaFetchedAt"></span>
+        </div>
+      </div>
+
+      <div class="grid" id="customerGrid"></div>
+
+      <section>
+        <h2>সাম্প্রতিক রিচার্জ</h2>
+        <table id="rechargeTable">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>মাসিক ব্যবহার বিশ্লেষণ</h2>
+        <div class="chart-container">
+          <canvas id="usageChart" height="100"></canvas>
+        </div>
+        <table id="consumptionTable">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:8000";
+    let myChart = null;
+    let currentFetchedMeter = ""; // বর্তমানে যে মিটারের ডেটা দেখাচ্ছে
+
+    const meterInput = document.getElementById("meterInput");
+    const checkBtn = document.getElementById("checkBtn");
+    const statusEl = document.getElementById("status");
+    const resultsEl = document.getElementById("results");
+    const meterPanel = document.getElementById("meterPanel");
+    const saveMeterBtn = document.getElementById("saveMeterBtn");
+    const savedMetersList = document.getElementById("savedMetersList");
+
+    // লোকাল স্টোরেজ থেকে সেভ করা মিটারগুলো আনা
+    let savedMeters = JSON.parse(localStorage.getItem("nesco_saved_meters_list")) || [];
+
+    // সেভ করা মিটারগুলো স্ক্রিনে দেখানো
+    function renderSavedMeters() {
+      savedMetersList.innerHTML = "";
+      savedMeters.forEach((item, index) => {
+        const btn = document.createElement("button");
+        btn.className = "saved-meter-btn";
+        btn.innerHTML = `⚡ ${item.name} <span class="del" title="ডিলিট করুন">&times;</span>`;
+
+        // মিটার নম্বরে ক্লিক করলে অটোমেটিক চেক হবে
+        btn.onclick = (e) => {
+          if (e.target.classList.contains("del")) return; // ডিলিট বাটনে ক্লিক করলে যেন চেক না হয়
+          meterInput.value = item.meter;
+          checkBalance();
+        };
+
+        // ডিলিট করার লজিক
+        btn.querySelector(".del").onclick = (e) => {
+          e.stopPropagation();
+          savedMeters.splice(index, 1);
+          localStorage.setItem("nesco_saved_meters_list", JSON.stringify(savedMeters));
+          renderSavedMeters();
+        };
+
+        savedMetersList.appendChild(btn);
+      });
+    }
+
+    // পেজ লোড হলে সেভ করা মিটারগুলো দেখাও
+    window.onload = () => {
+      renderSavedMeters();
+    };
+
+    function setStatus(text, isError = false) {
+      statusEl.textContent = text;
+      statusEl.classList.remove("hidden");
+      statusEl.classList.toggle("error", isError);
+    }
+    function clearStatus() { statusEl.classList.add("hidden"); }
+
+    function renderTable(tableEl, rows) {
+      const thead = tableEl.querySelector("thead");
+      const tbody = tableEl.querySelector("tbody");
+      thead.innerHTML = ""; tbody.innerHTML = "";
+      if (!rows || rows.length === 0) {
+        tbody.innerHTML = `<tr><td style="color:var(--muted)">কোনো তথ্য পাওয়া যায়নি</td></tr>`;
+        return;
+      }
+      const headers = Object.keys(rows[0]);
+      thead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>`;
+      tbody.innerHTML = rows.map(row =>
+        `<tr>${headers.map(h => `<td>${row[h] ?? ""}</td>`).join("")}</tr>`
+      ).join("");
+    }
+
+    function renderCustomerGrid(info) {
+      const gridEl = document.getElementById("customerGrid");
+      gridEl.innerHTML = "";
+      const entries = Object.entries(info || {});
+      if (entries.length === 0) {
+        gridEl.innerHTML = `<div class="info-card"><div class="v" style="color:var(--muted)">গ্রাহকের তথ্য পাওয়া যায়নি</div></div>`;
+        return;
+      }
+      for (const [k, v] of entries) {
+        gridEl.innerHTML += `<div class="info-card"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+      }
+    }
+
+    // চার্ট রেন্ডার করার ফাংশন
+    function renderChart(consumptionData) {
+      if (!consumptionData || consumptionData.length === 0) return;
+
+      const ctx = document.getElementById('usageChart').getContext('2d');
+      if (myChart) myChart.destroy();
+
+      const labels = consumptionData.map(row => {
+        const year = row["Year"] || Object.values(row)[0];
+        const month = row["Month"] || Object.values(row)[1];
+        const shortMonth = month ? month.substring(0, 3) : "";
+        return `${shortMonth} ${year}`;
+      });
+
+      const values = consumptionData.map(row => {
+        const vals = Object.values(row);
+        return parseFloat((vals[vals.length - 1] || "0").replace(/,/g, ''));
+      });
+
+      Chart.defaults.color = '#8593AC';
+      Chart.defaults.font.family = "'Hind Siliguri', sans-serif";
+
+      myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels.reverse(),
+          datasets: [{
+            label: 'ব্যবহারের পরিমাণ',
+            data: values.reverse(),
+            backgroundColor: 'rgba(255, 182, 39, 0.8)',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { grid: { color: '#24304A' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    async function checkBalance() {
+      const meter = meterInput.value.trim();
+      if (!meter) {
+        setStatus("দয়া করে মিটার/কনজিউমার নম্বর লিখুন", true);
+        return;
+      }
+
+      checkBtn.disabled = true;
+      checkBtn.innerHTML = "খোঁজ করা হচ্ছে...";
+      resultsEl.classList.add("hidden");
+      setStatus("NESCO সার্ভার থেকে তথ্য আনা হচ্ছে...");
+      meterPanel.classList.remove("danger-pulse");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/dashboard/${encodeURIComponent(meter)}`);
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || "অজানা সমস্যা হয়েছে");
+        }
+
+        currentFetchedMeter = meter; // সফল হলে মিটার নম্বরটি স্টোর করে রাখছি সেভ করার জন্য
+        const balanceEl = document.getElementById("balanceReadout");
+
+        if (data.balance === null || data.balance === undefined) {
+          balanceEl.innerHTML = `--<span class="unit">টাকা</span>`;
+          balanceEl.classList.remove("low");
+        } else {
+          balanceEl.innerHTML = `${data.balance.toFixed(2)}<span class="unit">টাকা</span>`;
+          const isLow = data.balance < 50;
+          balanceEl.classList.toggle("low", isLow);
+          meterPanel.classList.toggle("danger-pulse", isLow);
+        }
+
+        document.getElementById("balanceNote").textContent = data.note || "";
+        document.getElementById("metaCustomer").textContent = `কনজিউমার নং: ${data.customer_number}`;
+        document.getElementById("metaFetchedAt").textContent = `আপডেট: ${data.fetched_at}`;
+
+        // মিটার যদি আগে থেকেই সেভ করা থাকে, তবে সেভ বাটন হাইড করে দেওয়া
+        if (savedMeters.find(m => m.meter === currentFetchedMeter)) {
+          saveMeterBtn.classList.add("hidden");
+        } else {
+          saveMeterBtn.classList.remove("hidden");
+        }
+
+        renderCustomerGrid(data.customer_info);
+        renderTable(document.getElementById("rechargeTable"), data.recharge_history);
+        renderTable(document.getElementById("consumptionTable"), data.monthly_consumption);
+        renderChart(data.monthly_consumption);
+
+        clearStatus();
+        resultsEl.classList.remove("hidden");
+      } catch (err) {
+        setStatus(`ব্যর্থ হয়েছে: ${err.message}`, true);
+      } finally {
+        checkBtn.disabled = false;
+        checkBtn.innerHTML = "চেক করুন";
+      }
+    }
+
+    // নতুন মিটার সেভ করার লজিক
+    saveMeterBtn.addEventListener("click", () => {
+      const name = prompt("এই মিটারের একটি নাম দিন (যেমন: আমার বাসা, দোকান):");
+      if (name && name.trim() !== "") {
+        savedMeters.push({ name: name.trim(), meter: currentFetchedMeter });
+        localStorage.setItem("nesco_saved_meters_list", JSON.stringify(savedMeters));
+        renderSavedMeters();
+        saveMeterBtn.classList.add("hidden"); // সেভ করার পর বাটন হাইড করা
+      }
+    });
+
+    checkBtn.addEventListener("click", checkBalance);
+    meterInput.addEventListener("keydown", e => { if (e.key === "Enter") checkBalance(); });
+  </script>
+</body>
+
+</html>
